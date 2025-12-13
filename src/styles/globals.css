@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+a {
+  @apply text-indigo-600 hover:text-indigo-700 font-medium;
+}
+
+.prose p {
+  @apply leading-relaxed;
+}
+
+.prose h2 {
+  @apply text-2xl font-semibold mt-10 mb-4;
+}
+
+.prose h3 {
+  @apply text-xl font-semibold mt-6 mb-3;
+}
+
+.prose ul {
+  @apply list-disc ml-6 space-y-2;
+}
+
+.prose ol {
+  @apply list-decimal ml-6 space-y-2;
+}
+
+.prose strong {
+  @apply font-semibold text-slate-900;
+}

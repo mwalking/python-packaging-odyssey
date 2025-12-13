@@ -1,67 +1,56 @@
 # Python Packaging Odyssey
 
-This project is a web-based visual exploration of the Python packaging ecosystem. It appears to be a frontend application built to teach or display information about Python packaging.
+A polished, interactive “visual essay” that explains Python environments and packaging through scrollytelling, responsive visuals, and concise takeaways. Built with Vite, React, Tailwind, D3, and react-scrollama.
 
-## Technologies Used
+## Features
+- Home page with chapter grid, learning outcomes, and CTA.
+- Five chapters with consistent templates and navigation.
+- Chapter 1 fully authored with an interactive environment sandbox visualizing system vs virtual env site-packages.
+- Glossary and resources pages for quick reference.
 
-*   **Vite:** A modern frontend build tool that significantly improves the development experience.
-*   **React:** A JavaScript library for building user interfaces.
-*   **Tailwind CSS:** A utility-first CSS framework for rapid UI development.
-*   **D3.js:** A JavaScript library for producing dynamic, interactive data visualizations.
-*   **React Scrollama:** For scrollytelling interactions.
-*   **Lucide React:** For icons.
+## Getting started
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+3. Build for production:
+   ```bash
+   npm run build
+   ```
+4. Preview the production build locally:
+   ```bash
+   npm run preview
+   ```
 
-## Getting Started
+> If installing packages fails due to registry restrictions, try again from a network that can access https://registry.npmjs.org.
 
-To get a local copy up and running, follow these simple steps.
-
-### Prerequisites
-
-*   Node.js and npm (or a compatible package manager).
-
-### Installation & Development
-
-1.  **Clone the repo:**
-    ```sh
-    # This step is informational as you already have the project.
-    # git clone <your-repo-url>
-    ```
-
-2.  **Navigate to the project directory:**
-    ```sh
-    cd python-packaging-odyssey
-    ```
-
-3.  **Install NPM packages:**
-    ```sh
-    npm install
-    ```
-
-4.  **Start the development server:**
-    ```sh
-    npm run dev
-    ```
-    This will open the application in your default web browser.
-
-## Available Scripts
-
-In the project directory, you can run:
-
-*   `npm run dev`: Runs the app in the development mode.
-*   `npm run build`: Builds the app for production to the `dist` folder.
-*   `npm run preview`: Serves the production build locally for previewing.
-
-## Project Structure
-
+## Project structure
 ```
-/
-├── .git/               # Git version control
-├── src/                # Main source code for the application
-│   ├── App.jsx         # Main application component
-│   └── ...             # Other React components, hooks, etc.
-├── index.html          # Entry HTML file
-├── package.json        # Project metadata and dependencies
-├── vite.config.js      # Vite configuration
-├── tailwind.config.js  # Tailwind CSS configuration
-└── README.md           # This file
+src/
+  app/              # Router + app entry
+  components/       # Layout, chapter chrome, UI primitives
+  pages/            # Top-level routes (home, glossary, resources, chapter wrapper)
+  chapters/         # Chapter registry + per-chapter content/visual hooks
+  styles/           # Global Tailwind styles
+  utils/            # Small helpers (reading time, slug)
+  visuals/          # D3/React interactive components
 ```
+
+## Adding a new chapter (2-minute guide)
+1. Duplicate one of the folders in `src/chapters/` and update the metadata (slug, title, summary, tags, readingTime).
+2. Author your content in the exported React component. Reuse `Scrolly`, `Takeaways`, and `Callout` helpers as needed.
+3. Add any visuals to `src/visuals/` and import them into the chapter content.
+4. Register the chapter in `src/chapters/index.js` (order determines prev/next navigation and home page layout).
+5. Run `npm run lint` and `npm run format` before committing.
+
+## Tooling
+- **Linting:** `npm run lint`
+- **Formatting:** `npm run format`
+- **Styling:** Tailwind CSS utilities with a lightweight global typography layer.
+
+## Deployment notes
+The app uses a hash-based router for GitHub Pages compatibility. The Vite dev server and build output are ready for static hosting.
