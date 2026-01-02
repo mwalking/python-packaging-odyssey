@@ -60,6 +60,9 @@ const Navbar = () => {
               <NavLink to="/resources" className={navLinkClass}>
                 Resources
               </NavLink>
+              <NavLink to="/cheatsheet" className={navLinkClass}>
+                Cheatsheet
+              </NavLink>
             </nav>
 
             <button className="md:hidden p-2 rounded-md hover:bg-white/70" onClick={() => setOpen((v) => !v)}>
@@ -100,6 +103,9 @@ const Navbar = () => {
             </NavLink>
             <NavLink to="/resources" className={navLinkClass} onClick={() => setOpen(false)}>
               Resources
+            </NavLink>
+            <NavLink to="/cheatsheet" className={navLinkClass} onClick={() => setOpen(false)}>
+              Cheatsheet
             </NavLink>
           </div>
         </div>

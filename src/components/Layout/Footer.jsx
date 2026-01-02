@@ -45,7 +45,7 @@ const Footer = () => {
               <Link to="/chapters/lockfiles" className="hover:text-white">Lockfiles</Link>
             </li>
             <li>
-              <Link to="/chapters/uv" className="hover:text-white">uv</Link>
+              <Link to="/chapters/uv-intro" className="hover:text-white">The uv Era</Link>
             </li>
           </ul>
         </div>

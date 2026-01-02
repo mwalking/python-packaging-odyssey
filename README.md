@@ -4,8 +4,12 @@ A polished, interactive “visual essay” that explains Python environments and
 
 ## Features
 - Home page with chapter grid, learning outcomes, and CTA.
-- Five chapters with consistent templates and navigation.
-- Chapter 1 fully authored with an interactive environment sandbox visualizing system vs virtual env site-packages.
+- Nine chapters with consistent templates and navigation, covering the entire Python packaging ecosystem including detailed `uv` workflows.
+- Rich interactive visuals:
+  - Environment sandbox (System vs venv).
+  - Dependency resolution graphs.
+  - Global cache mechanisms.
+  - Unified workflow simulations (interactive CLI + filesystem visualization).
 - Glossary and resources pages for quick reference.
 
 ## Getting started
@@ -31,13 +35,13 @@ A polished, interactive “visual essay” that explains Python environments and
 ## Project structure
 ```
 src/
-  app/              # Router + app entry
-  components/       # Layout, chapter chrome, UI primitives
-  pages/            # Top-level routes (home, glossary, resources, chapter wrapper)
-  chapters/         # Chapter registry + per-chapter content/visual hooks
-  styles/           # Global Tailwind styles
-  utils/            # Small helpers (reading time, slug)
-  visuals/          # D3/React interactive components
+├───app/              # Router + app entry
+├───chapters/         # Chapter registry + per-chapter content/visual hooks
+├───components/       # Layout, chapter chrome, UI primitives
+├───pages/            # Top-level routes (home, glossary, resources, chapter wrapper)
+├───styles/           # Global Tailwind styles
+├───utils/            # Small helpers (reading time, slug)
+└───visuals/          # D3/React interactive components
 ```
 
 ## Adding a new chapter (2-minute guide)

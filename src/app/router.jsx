@@ -9,6 +9,7 @@ const Home = lazy(() => import('../pages/Home'));
 const ChapterPage = lazy(() => import('../pages/ChapterPage'));
 const Glossary = lazy(() => import('../pages/Glossary'));
 const Resources = lazy(() => import('../pages/Resources'));
+const Cheatsheet = lazy(() => import('../pages/Cheatsheet'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 const router = createHashRouter([
@@ -20,6 +21,7 @@ const router = createHashRouter([
       { path: 'chapters/:slug', element: <ChapterPage /> },
       { path: 'glossary', element: <Glossary /> },
       { path: 'resources', element: <Resources /> },
+      { path: 'cheatsheet', element: <Cheatsheet /> },
       { path: 'home', element: <Navigate to="/" replace /> },
       { path: '*', element: <NotFound /> },
     ],

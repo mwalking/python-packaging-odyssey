@@ -4,8 +4,15 @@ const terms = [
   { term: 'Environment', definition: 'A folder containing a Python interpreter, site-packages, and console scripts.' },
   { term: 'site-packages', definition: 'Directory where installed Python packages live for a given interpreter.' },
   { term: 'venv', definition: 'Built-in module that creates isolated Python environments backed by symlinks.' },
-  { term: 'pyproject.toml', definition: 'The standardized metadata file that declares build backends and dependencies.' },
+  { term: 'pyproject.toml', definition: 'The standardized metadata file that declares build backends and dependencies (PEP 621).' },
   { term: 'Lockfile', definition: 'A file that pins exact package versions (and often hashes) to ensure reproducible installs.' },
+  { term: 'Wheel (.whl)', definition: 'A built package format for Python, ready to be installed without compilation.' },
+  { term: 'sdist (Source Distribution)', definition: 'A distribution format (usually .tar.gz) that contains the raw source code and requires a build step.' },
+  { term: 'Dependency Resolution', definition: 'The process of finding a set of package versions that satisfy all constraints from all dependencies.' },
+  { term: 'uv', definition: 'An extremely fast Python package installer and resolver, written in Rust, designed as a drop-in replacement for pip and pip-tools.' },
+  { term: 'Global Cache', definition: 'A centralized storage for package files, allowing multiple projects to share the same physical files via linking.' },
+  { term: 'Reflink (Copy-on-Write)', definition: 'A filesystem feature where a "copy" shares the same data blocks on disk until one of the copies is modified.' },
+  { term: 'PEP 517/518', definition: 'Standards that defined the build system independence, allowing tools like Poetry, Hatch, and Flit to exist.' },
 ];
 
 const Glossary = () => (
