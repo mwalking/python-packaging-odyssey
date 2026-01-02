@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
-import { Shield, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle2, Box } from 'lucide-react';
 
 const scenarios = {
   hook: {
@@ -19,7 +19,7 @@ const scenarios = {
     systemPackages: [
       { name: 'python', version: '3.11', type: 'runtime' },
       { name: 'pip', version: '23.x', type: 'tooling' },
-      { name: 'pandas', version: '2.0', type: 'lib', replaced: '1.0' },
+      { name: 'pandas', version: '2.0', type: 'lib', replaced: '1.0', isConflict: true },
       { name: 'numpy', version: '2.x', type: 'lib' },
     ],
     envPackages: [],
@@ -37,7 +37,7 @@ const scenarios = {
       { name: 'python', version: '3.11 → .venv/bin/python', type: 'runtime' },
     ],
     activeEnv: 'venv',
-    message: 'python -m venv .venv gives you a sandbox that can shadow the global packages.',
+    message: 'python -m venv .venv creates a sandbox that isolates your project.',
   },
   venvSafe: {
     label: 'Install safely inside the venv',
@@ -48,7 +48,7 @@ const scenarios = {
     envPackages: [
       { name: 'python', version: '3.11 → .venv/bin/python', type: 'runtime' },
       { name: 'pip', version: '23.x (venv)', type: 'tooling' },
-      { name: 'pandas', version: '1.0 (project A)', type: 'lib' },
+      { name: 'pandas', version: '1.0 (project A)', type: 'lib', isSafe: true },
     ],
     activeEnv: 'venv',
     message: 'Inside the venv, you can pin pandas==1.0 without touching system Python.',
@@ -62,7 +62,7 @@ const scenarios = {
     envPackages: [
       { name: 'python', version: '3.11 → .venv/bin/python', type: 'runtime' },
       { name: 'pip', version: '23.x (venv)', type: 'tooling' },
-      { name: 'pandas', version: '1.0 (project A)', type: 'lib' },
+      { name: 'pandas', version: '1.0 (project A)', type: 'lib', isSafe: true },
     ],
     activeEnv: 'venv',
     message: 'Calling python -m pip ties installs to the right interpreter and keeps paths predictable.',
@@ -72,30 +72,27 @@ const scenarios = {
 const colorScale = d3
   .scaleOrdinal()
   .domain(['runtime', 'lib', 'tooling'])
-  .range(['#4f46e5', '#22c55e', '#f59e0b']);
+  .range(['#6366f1', '#10b981', '#f59e0b']);
 
 const EnvSandbox = ({ activeId }) => {
-  const [scenarioKey, setScenarioKey] = useState('hook');
   const svgRef = useRef(null);
-
-  useEffect(() => {
-    if (activeId && scenarios[activeId]) {
-      setScenarioKey(activeId);
-    }
-  }, [activeId]);
-
-  const scenario = scenarios[scenarioKey];
+  
+  // Default to 'hook' if activeId is missing or invalid
+  const currentKey = activeId && scenarios[activeId] ? activeId : 'hook';
+  const scenario = scenarios[currentKey];
 
   const nodes = useMemo(() => {
     const system = scenario.systemPackages.map((pkg, index) => ({
       ...pkg,
       environment: 'system',
-      index,
+      id: `sys-${pkg.name}`,
+      yIndex: index,
     }));
     const env = scenario.envPackages.map((pkg, index) => ({
       ...pkg,
       environment: 'venv',
-      index,
+      id: `venv-${pkg.name}`,
+      yIndex: index,
     }));
     return [...system, ...env];
   }, [scenario]);
@@ -103,130 +100,158 @@ const EnvSandbox = ({ activeId }) => {
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     const width = 520;
-    const height = 320;
-    svg.attr('viewBox', `0 0 ${width} ${height}`);
+    const height = 300;
+    
+    // Clear previous renders if necessary, though D3 join handles updates.
+    // For cleaner React transitions, we rely on D3's enter/update/exit.
 
     const xScale = d3
-      .scaleBand()
+      .scalePoint()
       .domain(['system', 'venv'])
-      .range([40, width - 40])
-      .padding(0.45);
+      .range([120, width - 120])
+      .padding(0.5);
 
-    const yScale = d3.scaleLinear().domain([0, 6]).range([60, height - 40]);
+    const yScale = d3.scaleLinear().domain([0, 5]).range([50, height - 50]);
 
-    const selection = svg.selectAll('g.node').data(nodes, (d) => `${d.environment}-${d.name}`);
+    const t = svg.transition().duration(600).ease(d3.easeCubicOut);
 
+    // Data join
+    const selection = svg.selectAll('g.node').data(nodes, (d) => d.id);
+
+    // EXIT
+    selection.exit()
+      .transition(t)
+      .attr('opacity', 0)
+      .attr('transform', d => `translate(${xScale(d.environment)}, ${yScale(d.yIndex) + 20})`)
+      .remove();
+
+    // ENTER
     const nodeEnter = selection
       .enter()
       .append('g')
       .attr('class', 'node')
-      .attr('transform', (d) => `translate(${xScale(d.environment)}, ${yScale(d.index)})`);
+      .attr('opacity', 0)
+      .attr('transform', (d) => `translate(${xScale(d.environment)}, ${yScale(d.yIndex) - 20})`);
 
+    // Circle background
     nodeEnter
       .append('circle')
-      .attr('r', 26)
-      .attr('fill', (d) => colorScale(d.type))
-      .attr('opacity', 0.12)
-      .attr('stroke', (d) => colorScale(d.type))
-      .attr('stroke-width', 2.5);
+      .attr('r', 28)
+      .attr('fill', '#fff')
+      .attr('stroke-width', 2);
 
+    // Text: Name
     nodeEnter
       .append('text')
+      .attr('class', 'label-name')
       .attr('text-anchor', 'middle')
-      .attr('dy', 4)
-      .attr('fill', '#0f172a')
-      .attr('font-size', 12)
+      .attr('dy', -2)
+      .attr('font-size', 11)
       .attr('font-weight', 700)
+      .attr('fill', '#1e293b')
+      .style('pointer-events', 'none')
       .text((d) => d.name);
 
+    // Text: Version
     nodeEnter
       .append('text')
+      .attr('class', 'label-version')
       .attr('text-anchor', 'middle')
-      .attr('dy', 20)
-      .attr('fill', '#475569')
-      .attr('font-size', 10)
+      .attr('dy', 12)
+      .attr('font-size', 9)
+      .attr('fill', '#64748b')
+      .style('pointer-events', 'none')
       .text((d) => d.version);
 
-    selection
-      .merge(nodeEnter)
-      .transition()
-      .duration(500)
-      .attr('transform', (d) => `translate(${xScale(d.environment)}, ${yScale(d.index)})`)
-      .select('circle')
-      .attr('stroke', (d) => colorScale(d.type))
-      .attr('fill', (d) => colorScale(d.type))
-      .attr('opacity', (d) => (d.environment === scenario.activeEnv ? 0.2 : 0.1));
+    // UPDATE (merge enter + update)
+    const nodeUpdate = selection.merge(nodeEnter);
 
-    selection.exit().remove();
+    nodeUpdate
+      .transition(t)
+      .attr('opacity', 1)
+      .attr('transform', (d) => `translate(${xScale(d.environment)}, ${yScale(d.yIndex)})`);
+
+    // Update styles based on data changes (e.g. conflict status)
+    nodeUpdate.select('circle')
+      .transition(t)
+      .attr('stroke', (d) => {
+         if (d.isConflict) return '#ef4444'; // Red for conflict
+         if (d.isSafe) return '#10b981';     // Green for safe
+         return colorScale(d.type);
+      })
+      .attr('fill', (d) => {
+         if (d.isConflict) return '#fef2f2';
+         if (d.isSafe) return '#ecfdf5';
+         return '#f8fafc';
+      });
+      
+    // Update text content in case version changed on the same node ID (unlikely with current ID scheme but good practice)
+    nodeUpdate.select('.label-version').text(d => d.version);
+
   }, [nodes, scenario.activeEnv]);
 
   const sysPath =
     scenario.activeEnv === 'venv'
-      ? ['.venv/bin/python', '.venv/lib/python3.11/site-packages', '/usr/lib/python3.11']
+      ? ['.venv/bin/python', '.venv/lib/site-packages', '/usr/lib/python3.11']
       : ['/usr/bin/python', '/usr/lib/python3.11/site-packages'];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
+    <div className="space-y-4 select-none">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-500">Active view</p>
-          <p className="text-lg font-semibold text-slate-900">{scenario.label}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Current State</p>
+          <p className="text-sm font-medium text-slate-800">{scenario.label}</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setScenarioKey('conflict')}
-            className="text-xs px-3 py-2 rounded-full bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-700"
-          >
-            Trigger conflict
-          </button>
-          <button
-            onClick={() => setScenarioKey('venvSafe')}
-            className="text-xs px-3 py-2 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200"
-          >
-            Install inside venv
-          </button>
+        <div className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 ${
+            scenario.activeEnv === 'venv' 
+            ? 'bg-emerald-100 text-emerald-800' 
+            : 'bg-amber-100 text-amber-800'
+          }`}>
+           {scenario.activeEnv === 'venv' ? <Shield className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+           {scenario.activeEnv === 'venv' ? 'Virtual Env Active' : 'System Python Active'}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div className={`rounded-xl border ${scenario.activeEnv === 'system' ? 'border-amber-300 bg-amber-50/60' : 'border-slate-200 bg-white'} p-3`}>
-          <div className="flex items-center gap-2 font-semibold text-slate-800 mb-2">
-            <AlertTriangle className="w-4 h-4 text-amber-500" /> System Python
-          </div>
-          <ul className="space-y-2 text-xs text-slate-600">
-            <li>python → /usr/bin/python</li>
-            <li>site-packages → /usr/lib/python3.11/site-packages</li>
-            <li>Shared by every project</li>
-          </ul>
+
+      {/* Visualization Area */}
+      <div className="relative rounded-xl bg-slate-50/50 border border-slate-200 overflow-hidden">
+        {/* Background labels */}
+        <div className="absolute top-4 left-0 w-full flex justify-between px-16 text-[10px] font-bold tracking-widest text-slate-400 uppercase pointer-events-none z-0">
+          <span className="text-center w-24">System / Global</span>
+          <span className="text-center w-24">Project .venv</span>
         </div>
-        <div className={`rounded-xl border ${scenario.activeEnv === 'venv' ? 'border-emerald-300 bg-emerald-50/60' : 'border-slate-200 bg-white'} p-3`}>
-          <div className="flex items-center gap-2 font-semibold text-slate-800 mb-2">
-            <Shield className="w-4 h-4 text-emerald-500" /> Virtual environment
-          </div>
-          <ul className="space-y-2 text-xs text-slate-600">
-            <li>python → .venv/bin/python</li>
-            <li>site-packages → .venv/lib/python3.11/site-packages</li>
-            <li>Only this project touches these files</li>
-          </ul>
-        </div>
+
+        {/* D3 SVG */}
+        <svg ref={svgRef} viewBox="0 0 520 300" className="w-full h-auto z-10 relative" />
       </div>
-      <svg ref={svgRef} className="w-full h-[320px] bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200" />
-      <div className="bg-slate-100 rounded-lg p-3 text-xs text-slate-700 border border-slate-200">
-        <div className="font-semibold mb-1">sys.path</div>
-        <div className="space-y-1">
-          {sysPath.map((path) => (
-            <div key={path} className="px-2 py-1 rounded bg-white border border-slate-200 font-mono text-[11px]">
-              {path}
+
+      {/* Sys.path Simulation */}
+      <div className="bg-slate-900 rounded-lg p-4 font-mono text-xs text-slate-300 shadow-inner">
+        <div className="flex items-center gap-2 mb-2 text-slate-500 border-b border-slate-800 pb-2">
+           <span className="text-purple-400 font-bold">sys.path</span>
+           <span>(Resolution Order)</span>
+        </div>
+        <div className="space-y-1.5">
+          {sysPath.map((path, i) => (
+            <div key={path} className={`flex items-center gap-2 ${i === 0 ? 'text-white font-bold' : 'text-slate-400'}`}>
+               <span className="text-slate-600 w-4 text-right">{i + 1}.</span>
+               <span>{path}</span>
+               {i === 0 && <span className="ml-auto text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-500">Highest Priority</span>}
             </div>
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg p-3">
-        {scenario.activeEnv === 'venv' ? (
-          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-        ) : (
-          <AlertTriangle className="w-5 h-5 text-amber-500" />
-        )}
-        <span>{scenario.message}</span>
+
+      {/* Narrative Context */}
+      <div className="flex gap-3 text-sm text-slate-600 bg-white border border-slate-100 rounded-lg p-3 shadow-sm">
+        <div className="mt-0.5 shrink-0">
+          {scenario.activeEnv === 'venv' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          ) : (
+            <Box className="w-5 h-5 text-indigo-500" />
+          )}
+        </div>
+        <p className="leading-snug">{scenario.message}</p>
       </div>
     </div>
   );
